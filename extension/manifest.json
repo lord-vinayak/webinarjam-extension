@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "WebinarJam Monitor",
+  "version": "1.0.0",
+  "description": "Monitors WebinarJam sessions and reports status to admin panel",
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://*.webinarjam.com/*",
+    "YOUR_RAILWAY_URL/*"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://*.webinarjam.com/*"],
+      "js": ["inject.js"],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": ["https://*.webinarjam.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ]
+}
