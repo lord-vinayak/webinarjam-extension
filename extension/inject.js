@@ -2,13 +2,14 @@
   const OrigRTC = window.RTCPeerConnection
   let pc = null
 
-  // Capture the RTCPeerConnection WebinarJam creates
-  window.RTCPeerConnection = function (...args) {
-    pc = new OrigRTC(...args)
-    return pc
-  }
-  // Copy static properties (needed for some platforms)
-  Object.assign(window.RTCPeerConnection, OrigRTC)
+  // ponytail: Proxy preserves prototype chain and all static props transparently,
+  // so WebinarJam's virtual background library can still patch RTCPeerConnection.prototype
+  window.RTCPeerConnection = new Proxy(OrigRTC, {
+    construct(target, args) {
+      pc = new target(...args)
+      return pc
+    }
+  })
 
   async function collectStats() {
     if (!pc) return null

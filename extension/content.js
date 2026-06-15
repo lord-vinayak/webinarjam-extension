@@ -1,5 +1,5 @@
-const BACKEND_URL = 'YOUR_RAILWAY_URL'
-const SECRET = 'YOUR_ADMIN_SECRET'
+const BACKEND_URL = 'http://localhost:3000'
+const SECRET = 'localsecret'
 
 let enabled = false
 
@@ -16,7 +16,10 @@ window.addEventListener('message', async (event) => {
   if (!enabled) return
 
   const { signals, sessionId } = event.data
-  const { presenterName } = await chrome.storage.local.get('presenterName')
+  let presenterName
+  try {
+    ;({ presenterName } = await chrome.storage.local.get('presenterName'))
+  } catch (_) { return } // extension context invalidated (e.g. after reload)
 
   // Save latest signals so popup can display them
   chrome.storage.local.set({ lastSignals: signals })
