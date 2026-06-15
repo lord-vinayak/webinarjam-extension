@@ -23,11 +23,11 @@ function extractMessage(li) {
 }
 
 function initChatObserver() {
-  const chatList = document.querySelector('ul.chat_list')
+  const chatList = document.querySelector('ul.chat_list.default')
   if (!chatList) {
     // ul.chat_list not in DOM yet — wait for it
     new MutationObserver((_, obs) => {
-      const list = document.querySelector('ul.chat_list')
+      const list = document.querySelector('ul.chat_list.default')
       if (!list) return
       obs.disconnect()
       initChatObserver()
