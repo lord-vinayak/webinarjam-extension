@@ -52,16 +52,24 @@
       signals.camera = track.enabled && track.readyState === 'live'
     }
 
-    // Audio quality from WebRTC stats
-    try {
-      const report = await pc.getStats()
-      report.forEach(s => {
-        if (s.type === 'outbound-rtp' && s.kind === 'audio') {
-          const loss = (s.packetsLost || 0) / ((s.packetsSent || 0) + 1)
-          if (loss > 0.05 || (s.jitter != null && s.jitter > 0.05)) signals.audio = 'poor'
-        }
-      })
-    } catch (_) {}
+    // Audio: check if mic track is muted/disabled first, then check quality
+    for (const sender of pc.getSenders()) {
+      const track = sender.track
+      if (!track || track.kind !== 'audio') continue
+      if (!track.enabled || track.muted) { signals.audio = 'muted'; break }
+    }
+
+    if (signals.audio !== 'muted') {
+      try {
+        const report = await pc.getStats()
+        report.forEach(s => {
+          if (s.type === 'outbound-rtp' && s.kind === 'audio') {
+            const loss = (s.packetsLost || 0) / ((s.packetsSent || 0) + 1)
+            if (loss > 0.05 || (s.jitter != null && s.jitter > 0.05)) signals.audio = 'poor'
+          }
+        })
+      } catch (_) {}
+    }
 
     return signals
   }

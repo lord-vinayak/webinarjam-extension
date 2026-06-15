@@ -11,6 +11,7 @@ export default function SessionCard({ session }) {
   const hasCritical =
     signals.network === 'offline' ||
     signals.screenShare === false ||
+    signals.audio === 'muted' ||
     signals.webrtcState === 'disconnected' ||
     signals.webrtcState === 'failed' ||
     heartbeatStatus === 'dead'

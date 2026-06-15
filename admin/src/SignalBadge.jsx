@@ -9,6 +9,7 @@ const COLOR = {
   failed: '#dc3545',
   dead: '#dc3545',
   unknown: '#dc3545',
+  muted: '#dc3545',
 }
 
 export default function SignalBadge({ label, value }) {
