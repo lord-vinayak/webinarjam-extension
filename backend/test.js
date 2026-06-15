@@ -1,3 +1,5 @@
+const assert = require('assert')
+
 process.env.ADMIN_SECRET = 'test-secret'
 process.env.PORT = '3001'
 
@@ -17,9 +19,9 @@ async function run() {
       signals: { network: 'good', screenShare: true, camera: true, audio: 'good', webrtcState: 'connected', heartbeat: true }
     })
   })
-  console.assert(res.status === 200, `expected 200, got ${res.status}`)
+  assert.strictEqual(res.status, 200, `expected 200, got ${res.status}`)
   const body = await res.json()
-  console.assert(body.ok === true, 'expected ok: true')
+  assert.strictEqual(body.ok, true, 'expected ok: true')
 
   // Rejected without secret
   const bad = await fetch('http://localhost:3001/session', {
@@ -27,11 +29,11 @@ async function run() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ sessionId: 'x' })
   })
-  console.assert(bad.status === 401, `expected 401, got ${bad.status}`)
+  assert.strictEqual(bad.status, 401, `expected 401, got ${bad.status}`)
 
   // Health check
   const health = await fetch('http://localhost:3001/health')
-  console.assert(health.status === 200, 'health check failed')
+  assert.strictEqual(health.status, 200, 'health check failed')
 
   console.log('✓ all backend tests passed')
   server.close()

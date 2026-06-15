@@ -4,8 +4,13 @@ const app = express()
 app.use(express.json())
 
 const SECRET = process.env.ADMIN_SECRET
+if (!SECRET) { console.error('ADMIN_SECRET must be set'); process.exit(1); }
+
+const SESSION_TTL_MS = 5000
+const EVICTION_INTERVAL_MS = 2000
+
 const sessions = {} // { [sessionId]: { ...payload, lastSeen } }
-const clients = []  // active SSE response objects
+const clients = new Set()  // active SSE response objects
 
 function auth(req, res, next) {
   const secret = req.headers['x-secret'] || req.query.secret
@@ -23,13 +28,13 @@ setInterval(() => {
   const now = Date.now()
   let changed = false
   for (const id of Object.keys(sessions)) {
-    if (now - sessions[id].lastSeen > 5000) {
+    if (now - sessions[id].lastSeen > SESSION_TTL_MS) {
       delete sessions[id]
       changed = true
     }
   }
   if (changed) broadcast()
-}, 2000)
+}, EVICTION_INTERVAL_MS)
 
 app.post('/session', auth, (req, res) => {
   const { sessionId } = req.body
@@ -47,9 +52,9 @@ app.get('/stream', auth, (req, res) => {
   res.flushHeaders()
 
   res.write(`data: ${JSON.stringify(sessions)}\n\n`)
-  clients.push(res)
+  clients.add(res)
 
-  req.on('close', () => clients.splice(clients.indexOf(res), 1))
+  req.on('close', () => clients.delete(res))
 })
 
 app.get('/health', (_req, res) => res.json({ ok: true }))
