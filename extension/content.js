@@ -52,7 +52,12 @@ function initChatObserver() {
   }).observe(chatList, { childList: true })
 }
 
-initChatObserver()
+// Defer until DOM exists — content.js runs at document_start where document.body is null
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initChatObserver)
+} else {
+  initChatObserver()
+}
 
 window.addEventListener('message', async (event) => {
   if (event.source !== window || event.data?.type !== '__WJ_MONITOR_STATS__') return
