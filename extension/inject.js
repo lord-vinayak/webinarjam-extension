@@ -1,6 +1,19 @@
 ;(function () {
   const OrigRTC = window.RTCPeerConnection
   let pc = null
+  let screenSharing = false
+
+  // Intercept getDisplayMedia — most reliable screen share signal,
+  // independent of track labels or contentHint which WebinarJam doesn't set predictably
+  const origGetDisplayMedia = navigator.mediaDevices.getDisplayMedia.bind(navigator.mediaDevices)
+  navigator.mediaDevices.getDisplayMedia = async function (...args) {
+    const stream = await origGetDisplayMedia(...args)
+    screenSharing = true
+    stream.getVideoTracks().forEach(track => {
+      track.addEventListener('ended', () => { screenSharing = false })
+    })
+    return stream
+  }
 
   // ponytail: Proxy preserves prototype chain and all static props transparently,
   // so WebinarJam's virtual background library can still patch RTCPeerConnection.prototype
@@ -16,7 +29,7 @@
 
     const signals = {
       network: 'good',
-      screenShare: false,
+      screenShare: screenSharing,
       camera: false,
       audio: 'good',
       webrtcState: pc.connectionState || 'unknown'
@@ -32,16 +45,11 @@
       }
     }
 
-    // Screen share vs camera detection from senders
+    // Camera detection from senders (screen share is tracked via getDisplayMedia interception above)
     for (const sender of pc.getSenders()) {
       const track = sender.track
       if (!track || track.kind !== 'video') continue
-      const isScreen = track.contentHint === 'detail' || /screen|display|monitor/i.test(track.label)
-      if (isScreen) {
-        signals.screenShare = track.enabled && track.readyState === 'live'
-      } else {
-        signals.camera = track.enabled && track.readyState === 'live'
-      }
+      signals.camera = track.enabled && track.readyState === 'live'
     }
 
     // Audio quality from WebRTC stats
