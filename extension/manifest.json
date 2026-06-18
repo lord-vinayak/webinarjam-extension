@@ -6,7 +6,8 @@
   "permissions": ["storage"],
   "host_permissions": [
     "https://*.webinarjam.com/*",
-    "YOUR_RAILWAY_URL/*"
+    "http://localhost:3000/*",
+    "https://violet-wildcat-300035.hostingersite.com/*"
   ],
   "action": {
     "default_popup": "popup.html"

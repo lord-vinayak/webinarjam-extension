@@ -1,5 +1,5 @@
-const BACKEND_URL = 'http://localhost:3000'
-const SECRET = 'localsecret'
+const BACKEND_URL = 'https://violet-wildcat-300035.hostingersite.com'
+const SECRET = 'devsecret'
 
 let enabled = false
 let unreadCount = 0
