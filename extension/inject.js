@@ -59,21 +59,23 @@
     signals.screenShare = isScreenSharing
 
     // --- Camera detection ---
-    // WebinarJam transforms screen share tracks through its video pipeline
-    // (virtual background canvas), so the sender's track ID differs from the
-    // original getDisplayMedia track ID.  We CANNOT distinguish camera vs
-    // screen share tracks by ID alone.
-    //
-    // Strategy: when screen sharing is active, the video sender carries the
-    // (transformed) screen share — not the camera.  So we only inspect
-    // video senders for camera state when screen sharing is OFF.
-    if (!isScreenSharing) {
-      for (const sender of pc.getSenders()) {
-        const track = sender.track
-        if (!track || track.kind !== 'video') continue
-        signals.camera = track.enabled && track.readyState === 'live'
+    // WebinarJam transforms video tracks through its pipeline (virtual background canvas),
+    // so track IDs don't match. However, WebRTC uses a distinct RTCRtpSender for each
+    // active stream (camera and screen share). 
+    // We can deduce the camera state by counting active video senders.
+    let activeVideoSenders = 0
+    for (const sender of pc.getSenders()) {
+      const track = sender.track
+      if (!track || track.kind !== 'video') continue
+      if (track.enabled && track.readyState === 'live') {
+        activeVideoSenders++
       }
     }
+    
+    // If screen share is ON, it accounts for 1 active video sender. 
+    // Any >1 active video senders means the camera is also ON.
+    // If screen share is OFF, any >0 active video senders means the camera is ON.
+    signals.camera = isScreenSharing ? (activeVideoSenders > 1) : (activeVideoSenders > 0)
 
     // Audio: check if mic track is muted/disabled first, then check quality
     for (const sender of pc.getSenders()) {
