@@ -1,16 +1,17 @@
 ;(function () {
   const OrigRTC = window.RTCPeerConnection
   let pc = null
-  let screenSharing = false
+  let screenTrack = null // reference to the original getDisplayMedia video track
 
   // Intercept getDisplayMedia — most reliable screen share signal,
   // independent of track labels or contentHint which WebinarJam doesn't set predictably
   const origGetDisplayMedia = navigator.mediaDevices.getDisplayMedia.bind(navigator.mediaDevices)
   navigator.mediaDevices.getDisplayMedia = async function (...args) {
     const stream = await origGetDisplayMedia(...args)
-    screenSharing = true
-    stream.getVideoTracks().forEach(track => {
-      track.addEventListener('ended', () => { screenSharing = false })
+    const tracks = stream.getVideoTracks()
+    screenTrack = tracks[0] ?? null
+    tracks.forEach(track => {
+      track.addEventListener('ended', () => { screenTrack = null })
     })
     return stream
   }
@@ -29,7 +30,7 @@
 
     const signals = {
       network: 'good',
-      screenShare: screenSharing,
+      screenShare: false,
       camera: false,
       audio: 'good',
       webrtcState: pc.connectionState || 'unknown'
@@ -45,11 +46,33 @@
       }
     }
 
-    // Camera detection from senders (screen share is tracked via getDisplayMedia interception above)
-    for (const sender of pc.getSenders()) {
-      const track = sender.track
-      if (!track || track.kind !== 'video') continue
-      signals.camera = track.enabled && track.readyState === 'live'
+    // --- Screen share detection ---
+    // Poll the ORIGINAL getDisplayMedia track's readyState directly.
+    // This is reliable regardless of what WebinarJam does downstream
+    // (e.g. piping through a canvas for virtual backgrounds), because the
+    // original MediaStreamTrack object's readyState always reflects reality.
+    const isScreenSharing = screenTrack != null && screenTrack.readyState === 'live'
+    if (screenTrack && screenTrack.readyState !== 'live') {
+      // Track ended but 'ended' event may not have fired yet — clean up
+      screenTrack = null
+    }
+    signals.screenShare = isScreenSharing
+
+    // --- Camera detection ---
+    // WebinarJam transforms screen share tracks through its video pipeline
+    // (virtual background canvas), so the sender's track ID differs from the
+    // original getDisplayMedia track ID.  We CANNOT distinguish camera vs
+    // screen share tracks by ID alone.
+    //
+    // Strategy: when screen sharing is active, the video sender carries the
+    // (transformed) screen share — not the camera.  So we only inspect
+    // video senders for camera state when screen sharing is OFF.
+    if (!isScreenSharing) {
+      for (const sender of pc.getSenders()) {
+        const track = sender.track
+        if (!track || track.kind !== 'video') continue
+        signals.camera = track.enabled && track.readyState === 'live'
+      }
     }
 
     // Audio: check if mic track is muted/disabled first, then check quality
