@@ -46,9 +46,10 @@ setInterval(() => {
 }, EVICTION_INTERVAL_MS)
 
 app.post('/session', auth, (req, res) => {
-  const { sessionId } = req.body
+  const { sessionId, presenterHash } = req.body
   if (!sessionId) return res.status(400).json({ error: 'sessionId required' })
-  sessions[sessionId] = { ...req.body, lastSeen: Date.now() }
+  const key = presenterHash || sessionId
+  sessions[key] = { ...req.body, lastSeen: Date.now() }
   broadcast()
   res.json({ ok: true })
 })

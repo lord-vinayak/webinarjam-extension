@@ -102,12 +102,14 @@
   setInterval(async () => {
     const signals = await collectStats()
     if (!signals) return
+    // ponytail: const at script top-level is not a window property — access by name
+    const cfg = typeof localConfiguration !== 'undefined' ? localConfiguration : null
     window.postMessage({
       type: '__WJ_MONITOR_STATS__',
       signals,
       sessionId: window.location.pathname,
-      // ponytail: const at script top-level is not a window property — access by name
-      webinarName: (typeof localConfiguration !== 'undefined' ? localConfiguration.webinarName : null) ?? 'Unknown'
+      presenterHash: cfg?.me?.id ?? cfg?.userHash ?? window.location.pathname,
+      webinarName: cfg?.webinarName ?? 'Unknown'
     }, '*')
   }, 1000)
 })()

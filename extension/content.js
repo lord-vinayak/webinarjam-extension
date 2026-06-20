@@ -63,7 +63,7 @@ window.addEventListener('message', async (event) => {
   if (event.source !== window || event.data?.type !== '__WJ_MONITOR_STATS__') return
   if (!enabled) return
 
-  const { signals, sessionId, webinarName } = event.data
+  const { signals, sessionId, presenterHash, webinarName } = event.data
 
   // Save latest signals + webinar name so popup can display them
   try {
@@ -75,6 +75,7 @@ window.addEventListener('message', async (event) => {
     headers: { 'Content-Type': 'application/json', 'X-Secret': SECRET },
     body: JSON.stringify({
       sessionId,
+      presenterHash: presenterHash || sessionId,
       presenterName: webinarName || 'Unknown',
       timestamp: Date.now(),
       signals: { ...signals, heartbeat: true },
