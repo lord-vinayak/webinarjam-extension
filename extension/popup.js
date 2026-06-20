@@ -1,15 +1,11 @@
-const nameInput = document.getElementById('name')
 const toggleBtn = document.getElementById('toggle')
 const signalsDiv = document.getElementById('signals')
+const webinarNameDiv = document.getElementById('webinar-name')
 
-chrome.storage.local.get(['presenterName', 'monitorEnabled', 'lastSignals'], ({ presenterName, monitorEnabled, lastSignals }) => {
-  nameInput.value = presenterName || ''
+chrome.storage.local.get(['monitorEnabled', 'lastSignals', 'webinarName'], ({ monitorEnabled, lastSignals, webinarName }) => {
   renderToggle(!!monitorEnabled)
   if (lastSignals) renderSignals(lastSignals)
-})
-
-nameInput.addEventListener('input', () => {
-  chrome.storage.local.set({ presenterName: nameInput.value })
+  if (webinarName) webinarNameDiv.textContent = webinarName
 })
 
 toggleBtn.addEventListener('click', () => {
@@ -23,6 +19,7 @@ toggleBtn.addEventListener('click', () => {
 chrome.storage.onChanged.addListener((changes) => {
   if (changes.lastSignals) renderSignals(changes.lastSignals.newValue)
   if (changes.monitorEnabled) renderToggle(changes.monitorEnabled.newValue)
+  if (changes.webinarName) webinarNameDiv.textContent = changes.webinarName.newValue
 })
 
 function renderToggle(enabled) {

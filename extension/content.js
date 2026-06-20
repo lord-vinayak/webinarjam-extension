@@ -63,21 +63,19 @@ window.addEventListener('message', async (event) => {
   if (event.source !== window || event.data?.type !== '__WJ_MONITOR_STATS__') return
   if (!enabled) return
 
-  const { signals, sessionId } = event.data
-  let presenterName
-  try {
-    ;({ presenterName } = await chrome.storage.local.get('presenterName'))
-  } catch (_) { return } // extension context invalidated (e.g. after reload)
+  const { signals, sessionId, webinarName } = event.data
 
-  // Save latest signals so popup can display them
-  chrome.storage.local.set({ lastSignals: signals })
+  // Save latest signals + webinar name so popup can display them
+  try {
+    chrome.storage.local.set({ lastSignals: signals, webinarName })
+  } catch (_) { return } // extension context invalidated (e.g. after reload)
 
   fetch(`${BACKEND_URL}/session`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-Secret': SECRET },
     body: JSON.stringify({
       sessionId,
-      presenterName: presenterName || 'Unknown',
+      presenterName: webinarName || 'Unknown',
       timestamp: Date.now(),
       signals: { ...signals, heartbeat: true },
       chat: { unreadCount, recentMessages }

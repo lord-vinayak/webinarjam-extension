@@ -105,7 +105,9 @@
     window.postMessage({
       type: '__WJ_MONITOR_STATS__',
       signals,
-      sessionId: window.location.pathname
+      sessionId: window.location.pathname,
+      // ponytail: const at script top-level is not a window property — access by name
+      webinarName: (typeof localConfiguration !== 'undefined' ? localConfiguration.webinarName : null) ?? 'Unknown'
     }, '*')
   }, 1000)
 })()
