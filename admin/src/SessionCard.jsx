@@ -2,7 +2,7 @@ import { useState } from 'react'
 import SignalBadge from './SignalBadge'
 
 export default function SessionCard({ session }) {
-  const { presenterName, sessionId, timestamp, signals, chat } = session
+  const { presenterName, sessionId, timestamp, signals, chat, participantCount } = session
   const [chatOpen, setChatOpen] = useState(false)
 
   const ageMs = Date.now() - timestamp
@@ -38,6 +38,7 @@ export default function SessionCard({ session }) {
 
       <div style={{ color: '#888', fontSize: 11, marginBottom: 12 }}>
         {sessionId} &middot; last seen {ageSec}s ago
+        {participantCount != null && <span style={{ marginLeft: 8 }}>👥 {participantCount}</span>}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>

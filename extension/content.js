@@ -65,6 +65,10 @@ window.addEventListener('message', async (event) => {
 
   const { signals, sessionId, presenterHash, webinarName } = event.data
 
+  const participantCount = parseInt(
+    document.querySelector('i.wji-people')?.parentElement?.querySelector('.label')?.textContent ?? '-1'
+  , 10)
+
   // Save latest signals + webinar name so popup can display them
   try {
     chrome.storage.local.set({ lastSignals: signals, webinarName })
@@ -79,7 +83,8 @@ window.addEventListener('message', async (event) => {
       presenterName: webinarName || 'Unknown',
       timestamp: Date.now(),
       signals: { ...signals, heartbeat: true },
-      chat: { unreadCount, recentMessages }
+      chat: { unreadCount, recentMessages },
+      participantCount: isNaN(participantCount) ? null : participantCount
     })
   }).catch(() => {})
 })
