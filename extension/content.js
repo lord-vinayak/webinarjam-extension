@@ -37,7 +37,6 @@ function initChatObserver() {
 
   // Seed recentMessages from existing DOM (DOM order = newest first due to flex-column-reverse)
   recentMessages = [...chatList.querySelectorAll('li.chat_list-chat')]
-    .slice(0, 10)
     .map(extractMessage)
 
   new MutationObserver((mutations) => {
@@ -45,7 +44,6 @@ function initChatObserver() {
       for (const node of mutation.addedNodes) {
         if (node.nodeType !== 1 || !node.classList.contains('chat_list-chat')) continue
         recentMessages.unshift(extractMessage(node))
-        if (recentMessages.length > 10) recentMessages.pop()
         unreadCount++
       }
     }

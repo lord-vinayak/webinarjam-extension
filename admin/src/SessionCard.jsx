@@ -1,11 +1,18 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import SignalBadge from './SignalBadge'
 
 export default function SessionCard({ session }) {
   const { presenterName, sessionId, timestamp, signals, chat, participantCount } = session
   const [chatOpen, setChatOpen] = useState(false)
+  const [seenCount, setSeenCount] = useState(0)
+  const [now, setNow] = useState(Date.now())
 
-  const ageMs = Date.now() - timestamp
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(id)
+  }, [])
+
+  const ageMs = now - timestamp
   const ageSec = Math.round(ageMs / 1000)
   const heartbeatStatus = ageSec < 3 ? 'ok' : ageSec < 5 ? 'slow' : 'dead'
 
@@ -20,18 +27,24 @@ export default function SessionCard({ session }) {
   const borderColor = hasCritical ? '#dc3545' : hasWarning ? '#e6a817' : '#28a745'
 
   const unread = chat?.unreadCount ?? 0
+  const displayedUnread = Math.max(0, unread - seenCount)
   const messages = chat?.recentMessages ?? []
+
+  function toggleChat() {
+    if (!chatOpen) setSeenCount(unread)
+    setChatOpen(o => !o)
+  }
 
   return (
     <div style={{ border: `2px solid ${borderColor}`, borderRadius: 10, padding: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 2 }}>
         <div style={{ fontWeight: 'bold', fontSize: 15 }}>{presenterName || 'Unknown'}</div>
-        {unread > 0 && (
+        {displayedUnread > 0 && (
           <button
-            onClick={() => setChatOpen(o => !o)}
+            onClick={toggleChat}
             style={{ background: '#dc3545', color: 'white', border: 'none', borderRadius: 12, padding: '2px 9px', fontSize: 12, cursor: 'pointer', fontWeight: 'bold' }}
           >
-            {unread} unread
+            {displayedUnread} unread
           </button>
         )}
       </div>
@@ -56,15 +69,15 @@ export default function SessionCard({ session }) {
 
       {unread > 0 && (
         <button
-          onClick={() => setChatOpen(o => !o)}
+          onClick={toggleChat}
           style={{ marginTop: 10, background: 'none', border: 'none', color: '#555', fontSize: 12, cursor: 'pointer', padding: 0 }}
         >
-          {chatOpen ? '▲ Hide chat' : `▼ Show last ${messages.length} messages`}
+          {chatOpen ? '▲ Hide chat' : `▼ Show ${messages.length} message${messages.length === 1 ? '' : 's'}`}
         </button>
       )}
 
       {chatOpen && messages.length > 0 && (
-        <div style={{ marginTop: 8, borderTop: '1px solid #eee', paddingTop: 8, maxHeight: 220, overflowY: 'auto' }}>
+        <div style={{ marginTop: 8, borderTop: '1px solid #eee', paddingTop: 8, height: 220, overflowY: 'scroll' }}>
           {messages.map((msg, i) => (
             <div key={i} style={{ marginBottom: 6 }}>
               <span style={{ fontWeight: 'bold', fontSize: 12, color: msg.isAdmin ? '#6f42c1' : '#333' }}>
